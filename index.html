@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Фото другу</title>
+    
+    <!-- Для красивого отображения на iPhone -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #000;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin: 10px 0;
+            color: #fff;
+        }
+        
+        .section {
+            background: #1c1c1e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #8e8e93;
+        }
+        
+        button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 600;
+            width: 100%;
+            margin: 8px 0;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        button.secondary {
+            background: #34c759;
+        }
+        
+        .notification-permission {
+            background: #2c2c2e;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #2c2c2e;
+        }
+        
+        #video {
+            width: 100%;
+            display: none;
+        }
+        
+        #video.active {
+            display: block;
+        }
+        
+        .photo-container {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #2c2c2e;
+            min-height: 200px;
+            margin-top: 10px;
+        }
+        
+        #myPhoto, #friendPhoto {
+            width: 100%;
+            display: block;
+        }
+        
+        .placeholder {
+            color: #8e8e93;
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+        }
+        
+        #status {
+            background: #2c2c2e;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            color: #8e8e93;
+            margin-top: auto;
+        }
+        
+        .code-display {
+            background: #2c2c2e;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 32px;
+            text-align: center;
+            letter-spacing: 8px;
+            font-weight: bold;
+            color: #007aff;
+            margin: 10px 0;
+        }
+        
+        input {
+            background: #2c2c2e;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            color: white;
+            font-size: 17px;
+            width: 100%;
+            margin: 8px 0;
+        }
+        
+        .badge {
+            background: #ff3b30;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .friend-item {
+            background: #2c2c2e;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .friend-code {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007aff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Фото другу</h1>
+        
+        <!-- Уведомления -->
+        <div class="notification-permission">
+            <span>🔔 Уведомления</span>
+            <button onclick="enableNotifications()" style="width: auto; padding: 8px 16px; margin: 0;">Включить</button>
+        </div>
+        
+        <!-- Вкладки -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button onclick="showTab('camera')" id="tabCamera" style="flex:1; background: #007aff;">Камера</button>
+            <button onclick="showTab('friends')" id="tabFriends" style="flex:1; background: #1c1c1e;">Друзья</button>
+        </div>
+        
+        <!-- Вкладка с камерой -->
+        <div id="cameraTab">
+            <div class="section">
+                <div class="section-title">📷 Твоя камера</div>
+                
+                <button onclick="startCamera()" id="startCameraBtn">Открыть камеру</button>
+                
+                <div class="video-container">
+                    <video id="video" autoplay playsinline></video>
+                </div>
+                
+                <button id="captureBtn" onclick="takePhoto()" style="display: none; background: #34c759;">Сфоткать</button>
+                
+                <div class="photo-container">
+                    <img id="myPhoto" src="" style="display: none;">
+                    <div id="myPlaceholder" class="placeholder">Нет фото</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">📤 Отправить другу</div>
+                
+                <select id="friendSelect" style="background: #2c2c2e; color: white; padding: 12px; border-radius: 8px; width: 100%; margin: 10px 0; border: none;">
+                    <option value="">Выбери друга...</option>
+                </select>
+                
+                <button onclick="sendPhotoToFriend()" style="background: #34c759;" id="sendBtn" disabled>Отправить фото</button>
+            </div>
+        </div>
+        
+        <!-- Вкладка с друзьями -->
+        <div id="friendsTab" style="display: none;">
+            <div class="section">
+                <div class="section-title">🔗 Твой код</div>
+                <div class="code-display" id="myCode">----</div>
+                <p style="color: #8e8e93; font-size: 14px; text-align: center;">Скажи этот код другу</p>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">➕ Добавить друга</div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="friendCode" placeholder="Введи код друга" maxlength="4" pattern="\d*" inputmode="numeric">
+                    <button onclick="addFriend()" style="width: auto;">➕</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">👥 Мои друзья</div>
+                <div id="friendsList"></div>
+            </div>
+        </div>
+        
+        <!-- Вкладка с фото друга -->
+        <div id="friendPhotosTab" style="display: none;">
+            <div class="section">
+                <div class="section-title">📸 Фото от друзей</div>
+                <div id="friendPhotosContainer"></div>
+            </div>
+        </div>
+        
+        <div id="status">Готов к работе</div>
+    </div>
+    
+    <script>
+        // ========== ОСНОВНЫЕ ПЕРЕМЕННЫЕ ==========
+        let myCode = Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('myCode').innerText = myCode;
+        
+        let myPhoto = null;
+        let friends = {};        // { "1234": { name: "Друг", photos: [] } }
+        let stream = null;
+        
+        // Загружаем сохраненных друзей
+        try {
+            let saved = localStorage.getItem('friends_' + myCode);
+            if(saved) {
+                friends = JSON.parse(saved);
+                updateFriendsList();
+                updateFriendSelect();
+            }
+        } catch(e) {}
+        
+        // ========== УВЕДОМЛЕНИЯ ==========
+        async function enableNotifications() {
+            if (!('Notification' in window)) {
+                alert('Твой браузер не поддерживает уведомления');
+                return;
+            }
+            
+            try {
+                let permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    document.getElementById('status').innerHTML = '✅ Уведомления включены!';
+                    
+                    // Тестовое уведомление
+                    new Notification('✅ Уведомления работают!', {
+                        body: 'Теперь ты будешь видеть фото друзей',
+                        icon: 'https://i.imgur.com/1ZQ2ZQ2.png',
+                        badge: 'https://i.imgur.com/1ZQ2ZQ2.png'
+                    });
+                }
+            } catch(err) {
+                alert('Ошибка: ' + err);
+            }
+        }
+        
+        // ========== КАМЕРА ==========
+        function startCamera() {
+            const video = document.getElementById('video');
+            
+            navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user' }  // front camera
+            })
+            .then(s => {
+                stream = s;
+                video.srcObject = s;
+                video.classList.add('active');
+                document.getElementById('startCameraBtn').style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'block';
+            })
+            .catch(err => {
+                alert('Ошибка камеры: ' + err);
+            });
+        }
+        
+        function takePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            // Сохраняем фото
+            myPhoto = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Показываем
+            document.getElementById('myPhoto').src = myPhoto;
+            document.getElementById('myPhoto').style.display = 'block';
+            document.getElementById('myPlaceholder').style.display = 'none';
+            
+            // Выключаем камеру
+            if(stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.classList.remove('active');
+            document.getElementById('startCameraBtn').style.display = 'block';
+            document.getElementById('captureBtn').style.display = 'none';
+            
+            // Активируем кнопку отправки
+            document.getElementById('sendBtn').disabled = false;
+            
+            document.getElementById('status').innerHTML = '✅ Фото готово к отправке';
+        }
+        
+        // ========== ДРУЗЬЯ ==========
+        function addFriend() {
+            let code = document.getElementById('friendCode').value;
+            
+            if(code.length !== 4 || isNaN(code)) {
+                alert('Введи 4 цифры');
+                return;
+            }
+            
+            if(code === myCode) {
+                alert('Это твой собственный код!');
+                return;
+            }
+            
+            if(friends[code]) {
+                alert('Этот друг уже добавлен');
+                return;
+            }
+            
+            // Добавляем друга
+            friends[code] = {
+                name: 'Друг с кодом ' + code,
+                photos: [],
+                lastSeen: new Date().getTime()
+            };
+            
+            saveFriends();
+            updateFriendsList();
+            updateFriendSelect();
+            
+            document.getElementById('friendCode').value = '';
+            
+            document.getElementById('status').innerHTML = '✅ Друг добавлен!';
+        }
+        
+        function updateFriendsList() {
+            let html = '';
+            
+            for(let code in friends) {
+                html += `
+                    <div class="friend-item">
+                        <span class="friend-code">${code}</span>
+                        <span>${friends[code].photos.length} фото</span>
+                        <button onclick="removeFriend('${code}')" style="width: auto; padding: 5px 10px; background: #ff3b30;">✕</button>
+                    </div>
+                `;
+            }
+            
+            if(html === '') {
+                html = '<div class="placeholder">Пока нет друзей</div>';
+            }
+            
+            document.getElementById('friendsList').innerHTML = html;
+        }
+        
+        function updateFriendSelect() {
+            let select = document.getElementById('friendSelect');
+            let html = '<option value="">Выбери друга...</option>';
+            
+            for(let code in friends) {
+                html += `<option value="${code}">Друг ${code}</option>`;
+            }
+            
+            select.innerHTML = html;
+        }
+        
+        function removeFriend(code) {
+            delete friends[code];
+            saveFriends();
+            updateFriendsList();
+            updateFriendSelect();
+        }
+        
+        function saveFriends() {
+            try {
+                localStorage.setItem('friends_' + myCode, JSON.stringify(friends));
+            } catch(e) {}
+        }
+        
+        // ========== ОТПРАВКА ФОТО ==========
+        function sendPhotoToFriend() {
+            let friendCode = document.getElementById('friendSelect').value;
+            
+            if(!friendCode) {
+                alert('Выбери друга');
+                return;
+            }
+            
+            if(!myPhoto) {
+                alert('Сначала сфоткай');
+                return;
+            }
+            
+            // Сохраняем фото в историю друга
+            if(!friends[friendCode].photos) {
+                friends[friendCode].photos = [];
+            }
+            
+            friends[friendCode].photos.push({
+                photo: myPhoto,
+                time: new Date().getTime(),
+                from: myCode
+            });
+            
+            // Сохраняем
+            saveFriends();
+            
+            // Отправляем уведомление (в реальном приложении здесь был бы сервер)
+            sendNotificationToFriend(friendCode, myPhoto);
+            
+            document.getElementById('status').innerHTML = `✅ Фото отправлено другу ${friendCode}`;
+        }
+        
+        // ========== УВЕДОМЛЕНИЯ ДЛЯ ДРУГА ==========
+        function sendNotificationToFriend(friendCode, photo) {
+            // Сохраняем в localStorage для друга
+            let friendKey = 'notifications_' + friendCode;
+            let notifications = [];
+            
+            try {
+                let saved = localStorage.getItem(friendKey);
+                if(saved) {
+                    notifications = JSON.parse(saved);
+                }
+            } catch(e) {}
+            
+            notifications.push({
+                from: myCode,
+                photo: photo,
+                time: new Date().getTime(),
+                seen: false
+            });
+            
+            try {
+                localStorage.setItem(friendKey, JSON.stringify(notifications));
+            } catch(e) {}
+            
+            // Пытаемся отправить уведомление (если друг на этом же устройстве)
+            if(Notification.permission === 'granted') {
+                try {
+                    let notif = new Notification('📸 Новое фото от друга!', {
+                        body: 'Код: ' + myCode,
+                        icon: photo,
+                        image: photo,
+                        badge: photo,
+                        silent: false,
+requireInteraction: true
+                    });
+                    
+                    notif.onclick = function() {
+                        window.focus();
+                        showFriendPhotos();
+                    };
+                } catch(e) {
+                    console.log('Не удалось показать уведомление', e);
+                }
+            }
+        }
+        
+        // ========== ПРОВЕРКА НОВЫХ ФОТО ==========
+        function checkForNewPhotos() {
+            let notifKey = 'notifications_' + myCode;
+            
+            try {
+                let saved = localStorage.getItem(notifKey);
+                if(saved) {
+                    let notifications = JSON.parse(saved);
+                    
+                    // Показываем новые фото
+                    notifications.forEach(notif => {
+                        if(!notif.seen) {
+                            showNewPhotoNotification(notif);
+                        }
+                    });
+                    
+                    // Отмечаем как просмотренные
+                    notifications = notifications.map(n => {
+                        n.seen = true;
+                        return n;
+                    });
+                    
+                    localStorage.setItem(notifKey, JSON.stringify(notifications));
+                }
+            } catch(e) {}
+        }
+        
+        function showNewPhotoNotification(notif) {
+            // Добавляем фото друга в интерфейс
+            let container = document.getElementById('friendPhotosContainer');
+            
+            let timeAgo = Math.floor((new Date().getTime() - notif.time) / 1000);
+            let timeText = timeAgo < 60 ? `${timeAgo} сек назад` : `${Math.floor(timeAgo/60)} мин назад`;
+            
+            let photoHtml = `
+                <div style="margin: 10px 0; padding: 10px; background: #2c2c2e; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #007aff;">От друга ${notif.from}</span>
+                        <span style="color: #8e8e93;">${timeText}</span>
+                    </div>
+                    <img src="${notif.photo}" style="width: 100%; border-radius: 8px;">
+                </div>
+            `;
+            
+            container.innerHTML = photoHtml + container.innerHTML;
+            
+            // Показываем уведомление в браузере
+            if(Notification.permission === 'granted') {
+                try {
+                    let notification = new Notification('📸 Новое фото!', {
+                        body: `От друга с кодом ${notif.from}`,
+                        icon: notif.photo,
+                        image: notif.photo,
+                        requireInteraction: true
+                    });
+                } catch(e) {}
+            }
+            
+            // Меняем заголовок вкладки
+            document.title = '📸 Новое фото!';
+            setTimeout(() => {
+                document.title = 'Фото другу';
+            }, 3000);
+        }
+        
+        // ========== НАВИГАЦИЯ ==========
+        function showTab(tab) {
+            document.getElementById('tabCamera').style.background = tab === 'camera' ? '#007aff' : '#1c1c1e';
+            document.getElementById('tabFriends').style.background = tab === 'friends' ? '#007aff' : '#1c1c1e';
+            
+            document.getElementById('cameraTab').style.display = tab === 'camera' ? 'block' : 'none';
+            document.getElementById('friendsTab').style.display = tab === 'friends' ? 'block' : 'none';
+        }
+        
+        function showFriendPhotos() {
+            showTab('camera');
+            // TODO: показать вкладку с фото друзей
+        }
+        
+        // ========== ПРОВЕРЯЕМ НОВЫЕ ФОТО КАЖДЫЕ 3 СЕКУНДЫ ==========
+        setInterval(checkForNewPhotos, 3000);
+        
+        // ========== СОХРАНЯЕМ ВСЁ ПРИ ВЫХОДЕ ==========
+        window.addEventListener('beforeunload', () => {
+            saveFriends();
+        });
+    </script>
+</body>
+</html>
