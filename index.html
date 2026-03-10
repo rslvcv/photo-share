@@ -159,6 +159,11 @@
             background: #FF1493;
         }
         
+        button.small {
+            padding: 10px;
+            font-size: 14px;
+        }
+        
         .notification-permission {
             background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(10px);
@@ -279,10 +284,61 @@
         .cloudinary-upload {
             display: none;
         }
+        
+        .connected-badge {
+            background: #FF1493;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        .partner-selector {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .partner-tag {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #FF1493;
+            border: 1px solid #FF69B4;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .partner-tag.active {
+            background: #FF69B4;
+            color: white;
+        }
+        
+        .partner-tag:hover {
+            transform: scale(1.05);
+        }
+        
+        .remove-partner {
+            color: #FF1493;
+            margin-left: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .switch-hint {
+            font-size: 12px;
+            color: #FF69B4;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
-    <!-- Модальное окно для выбора -->
+    <!-- Модальное окно для выбора пола (первый запуск) -->
     <div id="choiceModal" class="modal">
         <div class="modal-content">
             <div class="modal-title">🌸 Для кого это приложение?</div>
@@ -325,47 +381,63 @@
         
         <!-- Коды для двоих -->
         <div class="section">
-            <div class="section-title">💑 Это только для нас</div>
-            
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="color: #FF1493; margin-bottom: 5px;">Твой код</div>
-                <div class="code-display" id="myCode" style="font-size: 48px;">----</div>
-            </div>
+            <div class="section-title">💑 Твой код (навсегда)</div>
             
             <div style="text-align: center;">
-                <div style="color: #FF1493; margin-bottom: 5px;" id="theirCodeLabel">Его код</div>
-                <input type="text" id="theirCode" class="code-input" placeholder="Введи 4 цифры" maxlength="4" pattern="\d*" inputmode="numeric">
-                <button onclick="connectToThem()" style="margin-top: 10px; background: #FF69B4;" id="connectButton">💕 Подключиться к нему 💕</button>
+                <div class="code-display" id="myCode" style="font-size: 48px;">----</div>
+                <div style="color: #FF69B4; font-size: 14px; margin: 5px 0;">✨ Этот код твой навсегда ✨</div>
             </div>
-            
-            <div id="connectionStatus" style="text-align: center; margin-top: 15px; color: #FF1493; font-size: 14px;"></div>
         </div>
         
-        <!-- Камера -->
+        <!-- Выбор партнера -->
         <div class="section">
-            <div class="section-title">💓 Камера 💓</div>
+            <div class="section-title">👥 Мои партнеры</div>
             
-            <button onclick="startCamera()" id="startCameraBtn">📸 Открыть камеру</button>
+            <div id="partnerSelector" class="partner-selector"></div>
             
-            <div class="video-container">
-                <video id="video" autoplay playsinline></video>
+            <div style="margin: 15px 0;">
+                <div style="color: #FF1493; margin-bottom: 5px;" id="newPartnerLabel">Введи код нового партнера</div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newPartnerCode" class="code-input" placeholder="4 цифры" maxlength="4" pattern="\d*" inputmode="numeric">
+                    <button onclick="addNewPartner()" style="width: auto; background: #FF69B4;">➕</button>
+                </div>
             </div>
             
-            <button id="captureBtn" onclick="takePhoto()" style="display: none; background: #FF1493;">📸 Сфоткать</button>
-            
-            <div class="photo-container">
-                <img id="myPhoto" src="" style="display: none;">
-                <div id="myPlaceholder" class="placeholder">Нет фото</div>
-            </div>
-            
-            <button onclick="uploadToCloudinary()" style="background: #FF69B4; margin-top: 15px;" id="sendBtn" disabled>💌 Отправить ему 💌</button>
+            <div id="connectionStatus" style="text-align: center; margin-top: 10px; color: #FF1493; font-size: 14px;"></div>
         </div>
         
-        <!-- Фото от него/неё -->
-        <div class="section their-photo-container">
+        <!-- Текущий партнер -->
+        <div class="section">
+            <div class="section-title" id="currentPartnerTitle">Сейчас: никто не выбран</div>
+            
+            <!-- Камера -->
+            <div id="cameraSection" style="display: none;">
+                <button onclick="startCamera()" id="startCameraBtn">📸 Открыть камеру</button>
+                
+                <div class="video-container">
+                    <video id="video" autoplay playsinline></video>
+                </div>
+                
+                <button id="captureBtn" onclick="takePhoto()" style="display: none; background: #FF1493;">📸 Сфоткать</button>
+                
+                <div class="photo-container">
+                    <img id="myPhoto" src="" style="display: none;">
+                    <div id="myPlaceholder" class="placeholder">Нет фото</div>
+                </div>
+                
+                <button onclick="uploadToCloudinary()" style="background: #FF69B4; margin-top: 15px;" id="sendBtn" disabled>💌 Отправить 💌</button>
+            </div>
+            
+            <div id="noPartnerMessage" style="text-align: center; padding: 20px; color: #FF69B4;">
+                💕 Выбери партнера выше, чтобы начать обмен фото
+            </div>
+        </div>
+        
+        <!-- Фото от партнера -->
+        <div class="section their-photo-container" id="theirPhotosSection" style="display: none;">
             <div class="section-title" id="theirPhotosTitle">📸 Его фото</div>
             <div id="theirPhotos" style="min-height: 100px;">
-                <div class="placeholder" id="theirPhotosPlaceholder">Ждем его фото...</div>
+                <div class="placeholder" id="theirPhotosPlaceholder">Ждем фото...</div>
             </div>
         </div>
         
@@ -379,44 +451,79 @@
         // ========== НАСТРОЙКИ CLOUDINARY ==========
         const CLOUD_NAME = "dmpwwldqf";
         
+        // ========== ПОСТОЯННЫЙ КОД ==========
+        function getPermanentCode() {
+            let savedCode = localStorage.getItem('myPermanentCode');
+            if(savedCode) return savedCode;
+            
+            // Генерируем новый код
+            let newCode;
+            let isUnique = false;
+            
+            while(!isUnique) {
+                newCode = Math.floor(1000 + Math.random() * 9000).toString();
+                let existing = localStorage.getItem('user_' + newCode);
+                if(!existing) isUnique = true;
+            }
+            
+            // Сохраняем информацию о пользователе
+            localStorage.setItem('myPermanentCode', newCode);
+            localStorage.setItem('user_' + newCode, JSON.stringify({
+                code: newCode,
+                created: Date.now()
+            }));
+            
+            return newCode;
+        }
+        
+        const myCode = getPermanentCode();
+        document.getElementById('myCode').innerText = myCode;
+        
         // ========== ПЕРЕМЕННЫЕ ==========
-        let userGender = null;
-        let myCode = Math.floor(1000 + Math.random() * 9000);
-        let theirCode = null;
+        let userGender = localStorage.getItem('userGender_' + myCode) || null;
+        let partners = JSON.parse(localStorage.getItem('partners_' + myCode) || '[]');
+        let currentPartner = localStorage.getItem('currentPartner_' + myCode) || null;
         let myPhotoBlob = null;
         let stream = null;
         
-        document.getElementById('myCode').innerText = myCode;
+        // Хранилище для фото по каждому партнеру
+        let photosByPartner = JSON.parse(localStorage.getItem('photos_' + myCode) || '{}');
         
-        // Хранилище для ссылок на фото
-        let photoLinks = JSON.parse(localStorage.getItem('photoLinks_' + myCode) || '{}');
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        if(userGender) {
+            document.getElementById('choiceModal').style.display = 'none';
+        }
+        
+        updateGenderText();
+        updatePartnerSelector();
+        if(currentPartner) {
+            switchToPartner(currentPartner);
+        } else {
+            document.getElementById('cameraSection').style.display = 'none';
+            document.getElementById('theirPhotosSection').style.display = 'none';
+            document.getElementById('noPartnerMessage').style.display = 'block';
+        }
         
         // ========== ВЫБОР ПОЛА ==========
         function setGender(gender) {
             userGender = gender;
-            localStorage.setItem('userGender', gender);
+            localStorage.setItem('userGender_' + myCode, gender);
             document.getElementById('choiceModal').style.display = 'none';
             updateGenderText();
             
             if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('💕 Добро пожаловать! 💕', {
-                    body: gender === 'girl' ? 'Теперь ты будешь получать его фото' : 'Теперь ты будешь получать её фото'
-                });
+                new Notification('💕 Добро пожаловать! 💕');
             }
         }
         
         // ========== ОБНОВЛЕНИЕ ТЕКСТА ==========
         function updateGenderText() {
             if(userGender === 'girl') {
-                document.getElementById('theirCodeLabel').innerHTML = 'Его код';
-                document.getElementById('connectButton').innerHTML = '💕 Подключиться к нему 💕';
-                document.getElementById('sendBtn').innerHTML = '💌 Отправить ему 💌';
+                document.getElementById('newPartnerLabel').innerHTML = 'Введи код партнера';
                 document.getElementById('theirPhotosTitle').innerHTML = '📸 Его фото';
                 document.getElementById('theirPhotosPlaceholder').innerHTML = 'Ждем его фото...';
             } else if(userGender === 'boy') {
-                document.getElementById('theirCodeLabel').innerHTML = 'Её код';
-                document.getElementById('connectButton').innerHTML = '💕 Подключиться к ней 💕';
-                document.getElementById('sendBtn').innerHTML = '💌 Отправить ей 💌';
+                document.getElementById('newPartnerLabel').innerHTML = 'Введи код партнерши';
                 document.getElementById('theirPhotosTitle').innerHTML = '📸 Её фото';
                 document.getElementById('theirPhotosPlaceholder').innerHTML = 'Ждем её фото...';
             }
@@ -427,41 +534,33 @@
             document.getElementById('choiceModal').style.display = 'flex';
         }
         
-        // ========== ЗАГРУЗКА ==========
-        try {
-            let savedGender = localStorage.getItem('userGender');
-            if(savedGender) {
-                userGender = savedGender;
-                document.getElementById('choiceModal').style.display = 'none';
-                updateGenderText();
+        // ========== УПРАВЛЕНИЕ ПАРТНЕРАМИ ==========
+        function updatePartnerSelector() {
+            let selector = document.getElementById('partnerSelector');
+            let html = '';
+            
+            partners.forEach(partnerCode => {
+                let isActive = (partnerCode === currentPartner);
+                let gender = localStorage.getItem('userGender_' + partnerCode);
+                let emoji = gender === 'girl' ? '👸' : '🤴';
+                
+                html += `
+                    <div class="partner-tag ${isActive ? 'active' : ''}" onclick="switchToPartner('${partnerCode}')">
+                        ${emoji} ${partnerCode}
+                        <span class="remove-partner" onclick="removePartner('${partnerCode}'); event.stopPropagation();">✕</span>
+                    </div>
+                `;
+            });
+            
+            if(partners.length === 0) {
+                html = '<div style="color: #FF69B4; padding: 10px;">Пока нет партнеров. Добавь код выше!</div>';
             }
             
-            let saved = localStorage.getItem('theirCode_' + myCode);
-            if(saved) {
-                theirCode = saved;
-                document.getElementById('theirCode').value = theirCode;
-                let statusText = userGender === 'girl' ? '💕 Подключено к нему 💕' : '💕 Подключено к ней 💕';
-                document.getElementById('connectionStatus').innerHTML = statusText;
-            }
-            
-            // Показываем сохраненные фото
-            showSavedPhotos();
-        } catch(e) {}
-        
-        // ========== УВЕДОМЛЕНИЯ ==========
-        function enableNotifications() {
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        document.getElementById('status').innerHTML = '💗 Уведомления включены! 💗';
-                    }
-                });
-            }
+            selector.innerHTML = html;
         }
         
-        // ========== ПОДКЛЮЧЕНИЕ ==========
-        function connectToThem() {
-            let code = document.getElementById('theirCode').value;
+        function addNewPartner() {
+            let code = document.getElementById('newPartnerCode').value;
             
             if(code.length !== 4 || isNaN(code)) {
                 alert('Введи 4 цифры');
@@ -473,15 +572,79 @@
                 return;
             }
             
-            theirCode = code;
+            // Проверяем, существует ли такой пользователь
+            let userExists = localStorage.getItem('user_' + code);
+            if(!userExists) {
+                alert('Пользователь с таким кодом не найден. Убедись, что он уже установил приложение и открыл его хотя бы раз.');
+                return;
+            }
             
-            try {
-                localStorage.setItem('theirCode_' + myCode, theirCode);
-            } catch(e) {}
+            if(partners.includes(code)) {
+                alert('Этот партнер уже добавлен');
+                return;
+            }
             
-            let statusText = userGender === 'girl' ? '💕 Подключено к нему! 💕' : '💕 Подключено к ней! 💕';
-            document.getElementById('connectionStatus').innerHTML = statusText;
-            document.getElementById('status').innerHTML = '💗 Вы подключены! 💗';
+            partners.push(code);
+            localStorage.setItem('partners_' + myCode, JSON.stringify(partners));
+            
+            // Если это первый партнер, сразу переключаемся на него
+            if(partners.length === 1) {
+                switchToPartner(code);
+            }
+            
+            updatePartnerSelector();
+            document.getElementById('newPartnerCode').value = '';
+            document.getElementById('status').innerHTML = '💗 Партнер добавлен! 💗';
+        }
+        
+        function removePartner(code) {
+            partners = partners.filter(p => p !== code);
+            localStorage.setItem('partners_' + myCode, JSON.stringify(partners));
+            
+            if(currentPartner === code) {
+                currentPartner = partners.length > 0 ? partners[0] : null;
+                localStorage.setItem('currentPartner_' + myCode, currentPartner || '');
+                
+                if(currentPartner) {
+                    switchToPartner(currentPartner);
+                } else {
+                    // Нет партнеров
+                    document.getElementById('cameraSection').style.display = 'none';
+                    document.getElementById('theirPhotosSection').style.display = 'none';
+                    document.getElementById('noPartnerMessage').style.display = 'block';
+                    document.getElementById('currentPartnerTitle').innerHTML = 'Сейчас: никто не выбран';
+                }
+            }
+            
+            updatePartnerSelector();
+        }
+        
+        function switchToPartner(code) {
+            currentPartner = code;
+            localStorage.setItem('currentPartner_' + myCode, code);
+            
+            // Обновляем интерфейс
+            document.getElementById('currentPartnerTitle').innerHTML = `Сейчас: партнер ${code}`;
+            document.getElementById('cameraSection').style.display = 'block';
+            document.getElementById('theirPhotosSection').style.display = 'block';
+            document.getElementById('noPartnerMessage').style.display = 'none';
+            
+            // Обновляем селектор
+            updatePartnerSelector();
+            
+            // Показываем сохраненные фото этого партнера
+            showPartnerPhotos(code);
+        }
+        
+        // ========== УВЕДОМЛЕНИЯ ==========
+        function enableNotifications() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        document.getElementById('status').innerHTML = '💗 Уведомления включены! 💗';
+                    }
+                });
+            }
         }
         
         // ========== КАМЕРА ==========
@@ -512,11 +675,9 @@
             
             canvas.getContext('2d').drawImage(video, 0, 0);
             
-            // Конвертируем в blob
             canvas.toBlob((blob) => {
                 myPhotoBlob = blob;
                 
-                // Показываем превью
                 const url = URL.createObjectURL(blob);
                 document.getElementById('myPhoto').src = url;
                 document.getElementById('myPhoto').style.display = 'block';
@@ -536,8 +697,8 @@
         
         // ========== ЗАГРУЗКА В CLOUDINARY ==========
         function uploadToCloudinary() {
-            if(!theirCode) {
-                alert('Сначала введи код');
+            if(!currentPartner) {
+                alert('Сначала выбери партнера');
                 return;
             }
             
@@ -548,13 +709,11 @@
             
             document.getElementById('status').innerHTML = '💗 Загружаем в облако... 💗';
             
-            // Создаем форму для загрузки
             const formData = new FormData();
             formData.append('file', myPhotoBlob);
             formData.append('upload_preset', 'ml_default');
             formData.append('cloud_name', CLOUD_NAME);
             
-            // Загружаем на Cloudinary
             fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
                 method: 'POST',
                 body: formData
@@ -562,33 +721,33 @@
             .then(response => response.json())
             .then(data => {
                 const photoUrl = data.secure_url;
-                
-                // Сохраняем ссылку
                 const photoId = Date.now();
+                
                 const photoData = {
                     url: photoUrl,
                     from: myCode,
-                    to: theirCode,
+                    to: currentPartner,
                     fromGender: userGender,
-                    time: photoId
+                    time: photoId,
+                    id: photoId
                 };
                 
-                // Отправляем через localStorage
-                const key = 'photo_' + theirCode + '_from_' + myCode;
-                localStorage.setItem(key, JSON.stringify(photoData));
+                // Сохраняем в очередь для партнера
+                let queueKey = 'queue_' + currentPartner;
+                let queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
+                queue.push(photoData);
+                localStorage.setItem(queueKey, JSON.stringify(queue));
                 
                 // Сохраняем у себя в истории
-                if(!photoLinks[theirCode]) photoLinks[theirCode] = [];
-                photoLinks[theirCode].push(photoData);
-                localStorage.setItem('photoLinks_' + myCode, JSON.stringify(photoLinks));
+                if(!photosByPartner[currentPartner]) photosByPartner[currentPartner] = [];
+                photosByPartner[currentPartner].push(photoData);
+                localStorage.setItem('photos_' + myCode, JSON.stringify(photosByPartner));
                 
                 let successText = userGender === 'girl' ? '💗 Фото улетело к нему! 💗' : '💗 Фото улетело к ней! 💗';
                 document.getElementById('status').innerHTML = successText;
                 
                 if (Notification.permission === 'granted') {
-                    new Notification('💌 Фото отправлено! 💌', {
-                        body: userGender === 'girl' ? 'Он получит уведомление' : 'Она получит уведомление'
-                    });
+                    new Notification('💌 Фото отправлено! 💌');
                 }
             })
             .catch(error => {
@@ -599,89 +758,82 @@
         
         // ========== ПРОВЕРКА НОВЫХ ФОТО ==========
         function checkForNewPhotos() {
-            if(!theirCode) return;
+            // Проверяем свою очередь
+            let queueKey = 'queue_' + myCode;
+            let queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
             
-            const key = 'photo_' + myCode + '_from_' + theirCode;
-            const data = localStorage.getItem(key);
-            
-            if(data) {
-                const photoData = JSON.parse(data);
-                showNewPhoto(photoData);
-                localStorage.removeItem(key);
+            if(queue.length > 0) {
+                queue.forEach(photoData => {
+                    // Проверяем, что фото от одного из наших партнеров
+                    if(partners.includes(photoData.from)) {
+                        showNewPhoto(photoData);
+                        
+                        // Сохраняем в историю
+                        if(!photosByPartner[photoData.from]) photosByPartner[photoData.from] = [];
+                        photosByPartner[photoData.from].push(photoData);
+                        localStorage.setItem('photos_' + myCode, JSON.stringify(photosByPartner));
+                        
+                        // Если это текущий партнер, показываем сразу
+                        if(photoData.from === currentPartner) {
+                            showPartnerPhotos(currentPartner);
+                        }
+                        
+                        // Уведомление
+                        if (Notification.permission === 'granted') {
+                            let fromText = photoData.fromGender === 'girl' ? 'неё' : 'него';
+                            new Notification('💕 Новое фото от ' + fromText + '! 💕', {
+                                body: 'Смотри скорее 💗',
+                                image: photoData.url
+                            });
+                        }
+                    }
+                });
+                
+                // Очищаем очередь
+                localStorage.removeItem(queueKey);
             }
         }
         
         function showNewPhoto(photoData) {
-            let container = document.getElementById('theirPhotos');
-            
-            let timeText = 'только что';
-            if(photoData.time) {
-                let seconds = Math.floor((Date.now() - photoData.time) / 1000);
-                timeText = seconds < 60 ? `${seconds} сек назад` : `${Math.floor(seconds/60)} мин назад`;
-            }
-            
-            let fromText = photoData.fromGender === 'girl' ? 'неё' : 'него';
-            
-            let html = `
-                <div style="margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); border-radius: 15px; border: 2px solid #FF69B4;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #FF1493;">
-                        <span>💕 Фото от ${fromText}</span>
-                        <span>${timeText}</span>
-                    </div>
-                    <img src="${photoData.url}" style="width: 100%; border-radius: 12px;">
-                </div>
-            `;
-            
-            container.innerHTML = html + container.innerHTML;
-            
-            // Сохраняем в историю
-            if(!photoLinks[photoData.from]) photoLinks[photoData.from] = [];
-            photoLinks[photoData.from].push(photoData);
-            localStorage.setItem('photoLinks_' + myCode, JSON.stringify(photoLinks));
-            
-            if (Notification.permission === 'granted') {
-                let title = photoData.fromGender === 'girl' ? '💕 Получено фото от неё! 💕' : '💕 Получено фото от него! 💕';
-                new Notification(title, {
-                    body: 'Смотри скорее 💗',
-                    image: photoData.url
-                });
-            }
+            // Просто триггерим обновление
+            console.log('Новое фото от', photoData.from);
         }
         
-        function showSavedPhotos() {
+        function showPartnerPhotos(partnerCode) {
             let container = document.getElementById('theirPhotos');
             let html = '';
             
-            if(photoLinks) {
-                for(let from in photoLinks) {
-                    photoLinks[from].forEach(photoData => {
-                        let fromText = photoData.fromGender === 'girl' ? 'неё' : 'него';
-                        html += `
-                            <div style="margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); border-radius: 15px; border: 2px solid #FF69B4;">
-                                <div style="margin-bottom: 10px; color: #FF1493;">💕 Фото от ${fromText}</div>
-                                <img src="${photoData.url}" style="width: 100%; border-radius: 12px;">
+            if(photosByPartner[partnerCode]) {
+                photosByPartner[partnerCode].forEach(photoData => {
+                    let timeText = 'только что';
+                    if(photoData.time) {
+                        let seconds = Math.floor((Date.now() - photoData.time) / 1000);
+                        timeText = seconds < 60 ? `${seconds} сек назад` : `${Math.floor(seconds/60)} мин назад`;
+                    }
+                    
+                    let fromText = photoData.fromGender === 'girl' ? 'неё' : 'него';
+                    
+                    html += `
+                        <div style="margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); border-radius: 15px; border: 2px solid #FF69B4;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #FF1493;">
+                                <span>💕 Фото от ${fromText}</span>
+                                <span>${timeText}</span>
                             </div>
-                        `;
-                    });
-                }
+                            <img src="${photoData.url}" style="width: 100%; border-radius: 12px;">
+                        </div>
+                    `;
+                });
             }
             
             if(html) {
                 container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div class="placeholder">Пока нет фото</div>';
             }
         }
         
         // ========== ПРОВЕРКА КАЖДЫЕ 2 СЕКУНДЫ ==========
         setInterval(checkForNewPhotos, 2000);
-        
-        // ========== СОХРАНЕНИЕ ==========
-        window.addEventListener('beforeunload', () => {
-            if(theirCode) {
-                try {
-                    localStorage.setItem('theirCode_' + myCode, theirCode);
-                } catch(e) {}
-            }
-        });
     </script>
 </body>
 </html>
