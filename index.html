@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snap4Ywo</title>
+    <title>Snap4You</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -369,7 +369,7 @@
     <div class="container">
         <h1>
             <span class="heart-icon">💕</span> 
-            Snap4Ywo 
+            Snap4You 
             <span class="heart-icon">💕</span>
         </h1>
         
@@ -448,6 +448,7 @@
     <script>
         // ========== НАСТРОЙКИ CLOUDINARY ==========
         const CLOUD_NAME = "dmpwwldqf";
+        const UPLOAD_PRESET = "snap4you";  // ← твой новый пресет!
         
         // ========== ПОСТОЯННЫЙ КОД ==========
         function getPermanentCode() {
@@ -714,7 +715,7 @@
             
             const formData = new FormData();
             formData.append('file', myPhotoBlob);
-            formData.append('upload_preset', 'ml_default');
+            formData.append('upload_preset', UPLOAD_PRESET);  // ← используется твой пресет snap4you
             formData.append('cloud_name', CLOUD_NAME);
             
             fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
