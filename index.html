@@ -448,7 +448,7 @@
     <script>
         // ========== НАСТРОЙКИ CLOUDINARY ==========
         const CLOUD_NAME = "dmpwwldqf";
-        const UPLOAD_PRESET = "snap4you";  // ← твой новый пресет!
+        const UPLOAD_PRESET = "snap4you";
         
         // ========== ПОСТОЯННЫЙ КОД ==========
         function getPermanentCode() {
@@ -461,12 +461,10 @@
             
             while(!isUnique) {
                 newCode = Math.floor(1000 + Math.random() * 9000).toString();
-                // Просто проверяем, не использовали ли мы этот код раньше
                 let existing = localStorage.getItem('user_' + newCode);
                 if(!existing) isUnique = true;
             }
             
-            // Сохраняем информацию о пользователе
             localStorage.setItem('myPermanentCode', newCode);
             localStorage.setItem('user_' + newCode, JSON.stringify({
                 code: newCode,
@@ -486,7 +484,6 @@
         let myPhotoBlob = null;
         let stream = null;
         
-        // Хранилище для фото по каждому партнеру
         let photosByPartner = JSON.parse(localStorage.getItem('photos_' + myCode) || '{}');
         
         // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -500,7 +497,6 @@
         if(currentPartner && partners.includes(currentPartner)) {
             switchToPartner(currentPartner);
         } else if(partners.length > 0) {
-            // Если есть партнеры, но текущий не выбран, выбираем первого
             switchToPartner(partners[0]);
         }
         
@@ -541,7 +537,6 @@
             
             partners.forEach(partnerCode => {
                 let isActive = (partnerCode === currentPartner);
-                // Пытаемся получить пол партнера, если он уже есть в системе
                 let partnerGender = localStorage.getItem('userGender_' + partnerCode);
                 let emoji = partnerGender === 'girl' ? '👸' : (partnerGender === 'boy' ? '🤴' : '👤');
                 
@@ -580,18 +575,15 @@
                 return;
             }
             
-            // Добавляем партнера без всяких проверок
             partners.push(code);
             localStorage.setItem('partners_' + myCode, JSON.stringify(partners));
             
-            // Сразу переключаемся на нового партнера
             switchToPartner(code);
             
             updatePartnerSelector();
             document.getElementById('newPartnerCode').value = '';
             document.getElementById('status').innerHTML = '💗 Партнер добавлен! 💗';
             
-            // Показываем уведомление
             if (Notification.permission === 'granted') {
                 new Notification('💕 Партнер добавлен! 💕', {
                     body: 'Теперь вы можете обмениваться фото'
@@ -610,7 +602,6 @@
                 if(currentPartner) {
                     switchToPartner(currentPartner);
                 } else {
-                    // Нет партнеров
                     document.getElementById('currentPartnerSection').style.display = 'none';
                     document.getElementById('theirPhotosSection').style.display = 'none';
                     document.getElementById('currentPartnerTitle').innerHTML = 'Сейчас: никто не выбран';
@@ -626,17 +617,13 @@
             currentPartner = code;
             localStorage.setItem('currentPartner_' + myCode, code);
             
-            // Обновляем интерфейс
             let partnerGender = localStorage.getItem('userGender_' + code);
             let partnerEmoji = partnerGender === 'girl' ? '👸' : (partnerGender === 'boy' ? '🤴' : '👤');
             document.getElementById('currentPartnerTitle').innerHTML = `Сейчас: партнер ${code} ${partnerEmoji}`;
             document.getElementById('currentPartnerSection').style.display = 'block';
             document.getElementById('theirPhotosSection').style.display = 'block';
             
-            // Обновляем селектор
             updatePartnerSelector();
-            
-            // Показываем сохраненные фото этого партнера
             showPartnerPhotos(code);
         }
         
@@ -715,7 +702,7 @@
             
             const formData = new FormData();
             formData.append('file', myPhotoBlob);
-            formData.append('upload_preset', UPLOAD_PRESET);  // ← используется твой пресет snap4you
+            formData.append('upload_preset', UPLOAD_PRESET);
             formData.append('cloud_name', CLOUD_NAME);
             
             fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
@@ -724,7 +711,23 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log('✅ Ответ от Cloudinary:', data);
+                
+                // Проверяем, есть ли ошибка
+                if (data.error) {
+                    console.error('❌ Ошибка Cloudinary:', data.error);
+                    document.getElementById('status').innerHTML = '💔 Ошибка: ' + data.error.message;
+                    return;
+                }
+                
                 const photoUrl = data.secure_url;
+                console.log('📸 URL фото:', photoUrl);
+                
+                if (!photoUrl) {
+                    document.getElementById('status').innerHTML = '💔 Не получен URL фото';
+                    return;
+                }
+                
                 const photoId = Date.now();
                 
                 const photoData = {
@@ -755,32 +758,29 @@
                 }
             })
             .catch(error => {
-                console.error('Ошибка:', error);
-                document.getElementById('status').innerHTML = '💔 Ошибка загрузки';
+                console.error('❌ Ошибка сети:', error);
+                document.getElementById('status').innerHTML = '💔 Ошибка соединения';
             });
         }
         
         // ========== ПРОВЕРКА НОВЫХ ФОТО ==========
         function checkForNewPhotos() {
-            // Проверяем свою очередь
             let queueKey = 'queue_' + myCode;
             let queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
             
             if(queue.length > 0) {
+                console.log('📬 Найдены новые фото в очереди:', queue);
+                
                 queue.forEach(photoData => {
-                    // Проверяем, что фото от одного из наших партнеров
                     if(partners.includes(photoData.from)) {
-                        // Сохраняем в историю
                         if(!photosByPartner[photoData.from]) photosByPartner[photoData.from] = [];
                         photosByPartner[photoData.from].push(photoData);
                         localStorage.setItem('photos_' + myCode, JSON.stringify(photosByPartner));
                         
-                        // Если это текущий партнер, показываем сразу
                         if(photoData.from === currentPartner) {
                             showPartnerPhotos(currentPartner);
                         }
                         
-                        // Уведомление
                         if (Notification.permission === 'granted') {
                             let fromText = photoData.fromGender === 'girl' ? 'неё' : 'него';
                             new Notification('💕 Новое фото от ' + fromText + '! 💕', {
@@ -791,7 +791,6 @@
                     }
                 });
                 
-                // Очищаем очередь
                 localStorage.removeItem(queueKey);
             }
         }
@@ -800,8 +799,7 @@
             let container = document.getElementById('theirPhotos');
             let html = '';
             
-            if(photosByPartner[partnerCode]) {
-                // Сортируем от новых к старым
+            if(photosByPartner[partnerCode] && photosByPartner[partnerCode].length > 0) {
                 let sorted = [...photosByPartner[partnerCode]].reverse();
                 
                 sorted.forEach(photoData => {
@@ -813,13 +811,17 @@
                     
                     let fromText = photoData.fromGender === 'girl' ? 'неё' : 'него';
                     
+                    console.log('🖼️ Показываем фото:', photoData.url);
+                    
                     html += `
                         <div style="margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); border-radius: 15px; border: 2px solid #FF69B4;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #FF1493;">
                                 <span>💕 Фото от ${fromText}</span>
                                 <span>${timeText}</span>
                             </div>
-                            <img src="${photoData.url}" style="width: 100%; border-radius: 12px;">
+                            <img src="${photoData.url}" style="width: 100%; border-radius: 12px;" 
+                                 onload="console.log('✅ Фото загружено')"
+                                 onerror="console.log('❌ Ошибка загрузки изображения:', this.src); this.style.display='none'; this.parentNode.innerHTML += '<div style=\'color:#FF1493; padding:20px;\'>💔 Фото не загрузилось</div>'">
                         </div>
                     `;
                 });
