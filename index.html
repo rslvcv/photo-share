@@ -379,39 +379,41 @@
             <button onclick="enableNotifications()" style="width: auto; padding: 10px 20px; margin: 0; background: #FF69B4;">Включить</button>
         </div>
         
-        <!-- Коды для двоих -->
+        <!-- Твой код -->
         <div class="section">
-            <div class="section-title">💑 Твой код (навсегда)</div>
-            
+            <div class="section-title">💑 Твой личный код</div>
             <div style="text-align: center;">
                 <div class="code-display" id="myCode" style="font-size: 48px;">----</div>
-                <div style="color: #FF69B4; font-size: 14px; margin: 5px 0;">✨ Этот код твой навсегда ✨</div>
+                <div style="color: #FF69B4; font-size: 14px; margin: 5px 0;">✨ Сообщи этот код тому, с кем хочешь обмениваться фото ✨</div>
             </div>
         </div>
         
-        <!-- Выбор партнера -->
+        <!-- Добавление партнера -->
         <div class="section">
-            <div class="section-title">👥 Мои партнеры</div>
-            
-            <div id="partnerSelector" class="partner-selector"></div>
+            <div class="section-title" id="addPartnerTitle">➕ Добавить нового партнера</div>
             
             <div style="margin: 15px 0;">
-                <div style="color: #FF1493; margin-bottom: 5px;" id="newPartnerLabel">Введи код нового партнера</div>
+                <div style="color: #FF1493; margin-bottom: 5px;">Введи его/её код</div>
                 <div style="display: flex; gap: 10px;">
                     <input type="text" id="newPartnerCode" class="code-input" placeholder="4 цифры" maxlength="4" pattern="\d*" inputmode="numeric">
-                    <button onclick="addNewPartner()" style="width: auto; background: #FF69B4;">➕</button>
+                    <button onclick="addNewPartner()" style="width: auto; background: #FF69B4;">➕ Добавить</button>
                 </div>
             </div>
-            
+        </div>
+        
+        <!-- Мои партнеры -->
+        <div class="section">
+            <div class="section-title">👥 Мои партнеры</div>
+            <div id="partnerSelector" class="partner-selector"></div>
             <div id="connectionStatus" style="text-align: center; margin-top: 10px; color: #FF1493; font-size: 14px;"></div>
         </div>
         
         <!-- Текущий партнер -->
-        <div class="section">
+        <div class="section" id="currentPartnerSection" style="display: none;">
             <div class="section-title" id="currentPartnerTitle">Сейчас: никто не выбран</div>
             
             <!-- Камера -->
-            <div id="cameraSection" style="display: none;">
+            <div id="cameraSection">
                 <button onclick="startCamera()" id="startCameraBtn">📸 Открыть камеру</button>
                 
                 <div class="video-container">
@@ -427,15 +429,11 @@
                 
                 <button onclick="uploadToCloudinary()" style="background: #FF69B4; margin-top: 15px;" id="sendBtn" disabled>💌 Отправить 💌</button>
             </div>
-            
-            <div id="noPartnerMessage" style="text-align: center; padding: 20px; color: #FF69B4;">
-                💕 Выбери партнера выше, чтобы начать обмен фото
-            </div>
         </div>
         
         <!-- Фото от партнера -->
         <div class="section their-photo-container" id="theirPhotosSection" style="display: none;">
-            <div class="section-title" id="theirPhotosTitle">📸 Его фото</div>
+            <div class="section-title" id="theirPhotosTitle">📸 Фото от партнера</div>
             <div id="theirPhotos" style="min-height: 100px;">
                 <div class="placeholder" id="theirPhotosPlaceholder">Ждем фото...</div>
             </div>
@@ -462,6 +460,7 @@
             
             while(!isUnique) {
                 newCode = Math.floor(1000 + Math.random() * 9000).toString();
+                // Просто проверяем, не использовали ли мы этот код раньше
                 let existing = localStorage.getItem('user_' + newCode);
                 if(!existing) isUnique = true;
             }
@@ -496,12 +495,12 @@
         
         updateGenderText();
         updatePartnerSelector();
-        if(currentPartner) {
+        
+        if(currentPartner && partners.includes(currentPartner)) {
             switchToPartner(currentPartner);
-        } else {
-            document.getElementById('cameraSection').style.display = 'none';
-            document.getElementById('theirPhotosSection').style.display = 'none';
-            document.getElementById('noPartnerMessage').style.display = 'block';
+        } else if(partners.length > 0) {
+            // Если есть партнеры, но текущий не выбран, выбираем первого
+            switchToPartner(partners[0]);
         }
         
         // ========== ВЫБОР ПОЛА ==========
@@ -519,11 +518,11 @@
         // ========== ОБНОВЛЕНИЕ ТЕКСТА ==========
         function updateGenderText() {
             if(userGender === 'girl') {
-                document.getElementById('newPartnerLabel').innerHTML = 'Введи код партнера';
+                document.getElementById('addPartnerTitle').innerHTML = '➕ Добавить партнера';
                 document.getElementById('theirPhotosTitle').innerHTML = '📸 Его фото';
                 document.getElementById('theirPhotosPlaceholder').innerHTML = 'Ждем его фото...';
             } else if(userGender === 'boy') {
-                document.getElementById('newPartnerLabel').innerHTML = 'Введи код партнерши';
+                document.getElementById('addPartnerTitle').innerHTML = '➕ Добавить партнершу';
                 document.getElementById('theirPhotosTitle').innerHTML = '📸 Её фото';
                 document.getElementById('theirPhotosPlaceholder').innerHTML = 'Ждем её фото...';
             }
@@ -541,8 +540,9 @@
             
             partners.forEach(partnerCode => {
                 let isActive = (partnerCode === currentPartner);
-                let gender = localStorage.getItem('userGender_' + partnerCode);
-                let emoji = gender === 'girl' ? '👸' : '🤴';
+                // Пытаемся получить пол партнера, если он уже есть в системе
+                let partnerGender = localStorage.getItem('userGender_' + partnerCode);
+                let emoji = partnerGender === 'girl' ? '👸' : (partnerGender === 'boy' ? '🤴' : '👤');
                 
                 html += `
                     <div class="partner-tag ${isActive ? 'active' : ''}" onclick="switchToPartner('${partnerCode}')">
@@ -554,6 +554,8 @@
             
             if(partners.length === 0) {
                 html = '<div style="color: #FF69B4; padding: 10px;">Пока нет партнеров. Добавь код выше!</div>';
+                document.getElementById('currentPartnerSection').style.display = 'none';
+                document.getElementById('theirPhotosSection').style.display = 'none';
             }
             
             selector.innerHTML = html;
@@ -568,14 +570,7 @@
             }
             
             if(code === myCode) {
-                alert('Это твой код!');
-                return;
-            }
-            
-            // Проверяем, существует ли такой пользователь
-            let userExists = localStorage.getItem('user_' + code);
-            if(!userExists) {
-                alert('Пользователь с таким кодом не найден. Убедись, что он уже установил приложение и открыл его хотя бы раз.');
+                alert('Это твой код! Нельзя добавить самого себя');
                 return;
             }
             
@@ -584,17 +579,23 @@
                 return;
             }
             
+            // Добавляем партнера без всяких проверок
             partners.push(code);
             localStorage.setItem('partners_' + myCode, JSON.stringify(partners));
             
-            // Если это первый партнер, сразу переключаемся на него
-            if(partners.length === 1) {
-                switchToPartner(code);
-            }
+            // Сразу переключаемся на нового партнера
+            switchToPartner(code);
             
             updatePartnerSelector();
             document.getElementById('newPartnerCode').value = '';
             document.getElementById('status').innerHTML = '💗 Партнер добавлен! 💗';
+            
+            // Показываем уведомление
+            if (Notification.permission === 'granted') {
+                new Notification('💕 Партнер добавлен! 💕', {
+                    body: 'Теперь вы можете обмениваться фото'
+                });
+            }
         }
         
         function removePartner(code) {
@@ -609,9 +610,8 @@
                     switchToPartner(currentPartner);
                 } else {
                     // Нет партнеров
-                    document.getElementById('cameraSection').style.display = 'none';
+                    document.getElementById('currentPartnerSection').style.display = 'none';
                     document.getElementById('theirPhotosSection').style.display = 'none';
-                    document.getElementById('noPartnerMessage').style.display = 'block';
                     document.getElementById('currentPartnerTitle').innerHTML = 'Сейчас: никто не выбран';
                 }
             }
@@ -620,14 +620,17 @@
         }
         
         function switchToPartner(code) {
+            if(!partners.includes(code)) return;
+            
             currentPartner = code;
             localStorage.setItem('currentPartner_' + myCode, code);
             
             // Обновляем интерфейс
-            document.getElementById('currentPartnerTitle').innerHTML = `Сейчас: партнер ${code}`;
-            document.getElementById('cameraSection').style.display = 'block';
+            let partnerGender = localStorage.getItem('userGender_' + code);
+            let partnerEmoji = partnerGender === 'girl' ? '👸' : (partnerGender === 'boy' ? '🤴' : '👤');
+            document.getElementById('currentPartnerTitle').innerHTML = `Сейчас: партнер ${code} ${partnerEmoji}`;
+            document.getElementById('currentPartnerSection').style.display = 'block';
             document.getElementById('theirPhotosSection').style.display = 'block';
-            document.getElementById('noPartnerMessage').style.display = 'none';
             
             // Обновляем селектор
             updatePartnerSelector();
@@ -766,8 +769,6 @@
                 queue.forEach(photoData => {
                     // Проверяем, что фото от одного из наших партнеров
                     if(partners.includes(photoData.from)) {
-                        showNewPhoto(photoData);
-                        
                         // Сохраняем в историю
                         if(!photosByPartner[photoData.from]) photosByPartner[photoData.from] = [];
                         photosByPartner[photoData.from].push(photoData);
@@ -794,17 +795,15 @@
             }
         }
         
-        function showNewPhoto(photoData) {
-            // Просто триггерим обновление
-            console.log('Новое фото от', photoData.from);
-        }
-        
         function showPartnerPhotos(partnerCode) {
             let container = document.getElementById('theirPhotos');
             let html = '';
             
             if(photosByPartner[partnerCode]) {
-                photosByPartner[partnerCode].forEach(photoData => {
+                // Сортируем от новых к старым
+                let sorted = [...photosByPartner[partnerCode]].reverse();
+                
+                sorted.forEach(photoData => {
                     let timeText = 'только что';
                     if(photoData.time) {
                         let seconds = Math.floor((Date.now() - photoData.time) / 1000);
